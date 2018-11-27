@@ -81,6 +81,12 @@ module.exports = class CmdHandler extends EventEmitter {
         return this;
     }
 
+    /**
+     * Register a custom permission handler class for command
+     * permission instead of default permission level based system.
+     * Must extend PermissionInstance.
+     * @param {Object} PermissionHandlerClass Class of used permission handler (must extend PermissionInstance)
+     */
     setPermissionHandler(PermissionHandlerClass) {
         if (!PermissionHandlerClass) {
             throw Error('permission handler class is undefined!');
@@ -89,6 +95,7 @@ module.exports = class CmdHandler extends EventEmitter {
             throw Error('permission handler must extend PermissionInterface!');
         }
         this._permissionHandlerClass = PermissionHandlerClass; 
+        return this;
     }
 
     /**
