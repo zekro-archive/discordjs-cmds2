@@ -1,6 +1,9 @@
 const discordjs = require('discord.js');
 const CmdHandler = require('../src/main').CmdHandler;
 const Command = require('../src/main').Command;
+const DbDriver = require('./dbdriver');
+
+const conf = require('../private.conf.json');
 
 var client = new discordjs.Client();
 
@@ -8,6 +11,8 @@ var cmdHandler = new CmdHandler(client, {
     prefix: '--'
 });
 
-cmdHandler.registerCommand(require('./testcmd'));
+cmdHandler
+    .setDatabaseDriver(DbDriver)
+    .registerCommand(require('./testcmd'));
 
-client.login('NDE5ODM3NDcyMDQ2ODQxODY2.Dt1Psw.02aaOoTAYhXf1deSzw-GEaImMSw');
+client.login(conf.token);

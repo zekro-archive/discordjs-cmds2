@@ -3,6 +3,7 @@ const discordjs = require('discord.js');
 const HelpCmd = require('./helpcmd');
 const consts = require('./const');
 const Command = require('./command');
+const DatabaseInterface = require('./dbinterface');
 const logger = require('./logger').logger;
 
 
@@ -57,6 +58,22 @@ module.exports = class CmdHandler extends EventEmitter {
         client.on('ready', () => {
             this._registerMessageHandler();
         });
+    }
+
+    /**
+     * Register used database driver class. Must extend DatabaseInterface.
+     * @param {Object} DatabaseDriverClass Class of the used database driver (must extend DatabaseInterface)
+     * @returns this
+     */
+    setDatabaseDriver(DatabaseDriverClass) {
+        if (!DatabaseDriverClass) {
+            throw Error('database driver is undefined!');
+        }
+        if (!DatabaseDriverClass.prototype instanceof DatabaseInterface) {
+            throw Error('database driver must extend DatabaseInterface!');
+        }
+        this.databaseDriver = new DatabaseDriverClass();
+        return this;
     }
 
     /**

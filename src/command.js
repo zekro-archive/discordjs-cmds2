@@ -3,6 +3,7 @@ const consts = require('./const');
 
 /**
  * Abstract Class Command for creating command classes.
+ * @abstract
  * @class Command
  */
 module.exports = class Command {
