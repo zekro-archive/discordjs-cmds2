@@ -3,7 +3,7 @@
  * @abstract
  * @class PermissionInterface
  */
-module.exports = class PermissionInterface {
+class PermissionInterface {
 
     /**
      * Create instance of Permission Handler class.
@@ -40,3 +40,5 @@ module.exports = class PermissionInterface {
         throw Error('checkUserPermission(userID, commandInstance) must be implemented!');
     }
 };
+
+module.exports = PermissionInterface;

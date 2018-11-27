@@ -6,7 +6,7 @@ const consts = require('./const');
  * @abstract
  * @class Command
  */
-module.exports = class Command {
+class Command {
 
     ///// PUBLIC ABSTRACT /////
 
@@ -149,3 +149,5 @@ module.exports = class Command {
         return this;
     }
 };
+
+module.exports = Command;

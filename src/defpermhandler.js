@@ -1,6 +1,6 @@
 const PermissionInterface = require('./perminterface');
 
-module.exports = class DefaultPermissionInterface extends PermissionInterface {
+class DefaultPermissionInterface extends PermissionInterface {
 
     constructor(databaseDriver) {
         super(databaseDriver);
@@ -19,3 +19,5 @@ module.exports = class DefaultPermissionInterface extends PermissionInterface {
     }
 
 };
+
+module.exports = DefaultPermissionInterface;

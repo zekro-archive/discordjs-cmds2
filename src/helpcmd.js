@@ -2,7 +2,7 @@ const Command = require('./command');
 const consts = require('./const');
 const discordjs = require('discord.js');
 
-module.exports = class HelpCmd extends Command {
+class HelpCmd extends Command {
 
     constructor() {
         super();
@@ -51,3 +51,5 @@ module.exports = class HelpCmd extends Command {
     } 
 
 }
+
+module.exports = HelpCmd;

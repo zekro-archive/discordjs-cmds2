@@ -9,7 +9,7 @@ const DefaultPermissionHandler = require('./defpermhandler');
 const PermissionInterface = require('./perminterface');
 
 
-module.exports = class CmdHandler extends EventEmitter {
+class CmdHandler extends EventEmitter {
 
     ///// PUBLICS /////
 
@@ -231,3 +231,5 @@ module.exports = class CmdHandler extends EventEmitter {
         }
     }
 }
+
+module.exports = CmdHandler;

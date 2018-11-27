@@ -3,7 +3,7 @@
  * @abstract
  * @class DatabaseInterface
  */
-module.exports = class DatabaseInterface {
+class DatabaseInterface {
 
     constructor() {
         if (!(this.getUserPermissionLevel(0) instanceof Promise)) {
@@ -41,3 +41,5 @@ module.exports = class DatabaseInterface {
     }
 
 }
+
+module.exports = DatabaseInterface;
