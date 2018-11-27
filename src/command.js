@@ -73,8 +73,8 @@ module.exports = class Command {
      * @abstract
      * @param {Object} commandArguments
      * @param {Object} commandArguments.channel     TextChannel where command was sent to
-     * @param {Object} commandArguments.member      Member object of sender of the command
-     * @param {Object} commandArguments.guild       Guild where the command was sent to ('undefined' if command was send to DM channel)
+     * @param {Object} [commandArguments.member]    Member object of sender of the command
+     * @param {Object} [commandArguments.guild]     Guild where the command was sent to ('undefined' if command was send to DM channel)
      * @param {Object} commandArguments.message     Message object of the command message
      * @param {Object} commandArguments.args        The arguments passed to the command as string array
      * @param {Object} commandArguments.cmdhandler  CommandHander instance
@@ -91,20 +91,22 @@ module.exports = class Command {
      * @param {error}  error
      * @param {Object} commandArguments @see exec
      * @param {Object} commandArguments
-     * @param {Object} commandArguments.channel TextChannel where command was sent to
-     * @param {Object} commandArguments.member  Member object of sender of the command
-     * @param {Object} commandArguments.guild   Guild where the command was sent to ('undefined' if command was send to DM channel)
-     * @param {Object} commandArguments.message Message object of the command message
-     * @param {Object} commandArguments.args    The arguments passed to the command as string array+
+     * @param {Object} commandArguments.channel     TextChannel where command was sent to
+     * @param {Object} [commandArguments.member]    Member object of sender of the command
+     * @param {Object} [commandArguments.guild]     Guild where the command was sent to ('undefined' if command was send to DM channel)
+     * @param {Object} commandArguments.message     Message object of the command message
+     * @param {Object} commandArguments.args        The arguments passed to the command as string array+
      * @param {Object} commandArguments.cmdhandler  CommandHander instance
      */
     error(error, commandArguments) {
-        if (commandArguments && commandArguments.channel && commandArguments.channel.send) {
+        if (commandArguments && commandArguments.channel) {
             let emb = new discordjs.RichEmbed()
                 .setColor(consts.COLORS.ERROR)
                 .setTitle('Command Error')
                 .setDescription('```\n' + error + '\n```');
-            return commandArguments.channel.send('', emb);
+            return commandArguments.channel.send('', emb).catch((err) => {
+                throw err;
+            });
         }
     }
 

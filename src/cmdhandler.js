@@ -5,6 +5,8 @@ const consts = require('./const');
 const Command = require('./command');
 const DatabaseInterface = require('./dbinterface');
 const logger = require('./logger').logger;
+const DefaultPermissionHandler = require('./defpermhandler');
+const PermissionInterface = require('./perminterface');
 
 
 module.exports = class CmdHandler extends EventEmitter {
@@ -17,6 +19,7 @@ module.exports = class CmdHandler extends EventEmitter {
      * @param {Object}  options                   Options for the CommandHandler
      * @param {string}  options.prefix            Default prefix to access bot. This prefix is ALWAYS ACTIVE and will
      *                                            not be overwritten by guild prefixes.
+     * @param {number}  [options.ownerPermLvl]    Guild owner permission level (default: 10)
      * @param {number}  [options.defaultColor]    Default color used for output message embeds
      * @param {boolean} [options.logToConsole]    Wether log command executions to console or not (default: true)
      * @param {boolean} [options.verboseLog]      Enabel or disable verbose logging (default: false)  
@@ -44,6 +47,7 @@ module.exports = class CmdHandler extends EventEmitter {
         this.guildPrefixes = {};
 
         this.prefix = options.prefix;
+        this.ownerPermLvl = options.ownerPermLvl || 10;
         this.logToConsole = options.logToConsole ? options.logToConsole : true;
         this.verboseLog = options.verboseLog ? options.verboseLog : false;
         this.invokeToLower = options.invokeToLower ? options.invokeToLower : true;
@@ -54,9 +58,10 @@ module.exports = class CmdHandler extends EventEmitter {
         }
 
         this._defaultHelpCmdInstance = new HelpCmd();
+        this._permissionHandlerClass = DefaultPermissionHandler;
 
         client.on('ready', () => {
-            this._registerMessageHandler();
+            this._setup();
         });
     }
 
@@ -69,11 +74,21 @@ module.exports = class CmdHandler extends EventEmitter {
         if (!DatabaseDriverClass) {
             throw Error('database driver is undefined!');
         }
-        if (!DatabaseDriverClass.prototype instanceof DatabaseInterface) {
+        if (!(DatabaseDriverClass.prototype instanceof DatabaseInterface)) {
             throw Error('database driver must extend DatabaseInterface!');
         }
         this.databaseDriver = new DatabaseDriverClass();
         return this;
+    }
+
+    setPermissionHandler(PermissionHandlerClass) {
+        if (!PermissionHandlerClass) {
+            throw Error('permission handler class is undefined!');
+        }
+        if (!(PermissionHandlerClass.prototype instanceof PermissionInterface)) {
+            throw Error('permission handler must extend PermissionInterface!');
+        }
+        this._permissionHandlerClass = PermissionHandlerClass; 
     }
 
     /**
@@ -121,6 +136,11 @@ module.exports = class CmdHandler extends EventEmitter {
 
     ///// PRIVATES /////
 
+    _setup() {
+        this.permissionHandler = new this._permissionHandlerClass(this.databaseDriver);
+        this._registerMessageHandler();
+    }
+
     _registerMessageHandler() {
         this.client.on('message', (message) => {
             this._parseCommand(message)
@@ -142,6 +162,26 @@ module.exports = class CmdHandler extends EventEmitter {
             args:       args,
             cmdhandler: this,
         };
+    }
+
+    _execCommand(cmdinstance, message, cmdArgs) {
+        new Promise((resolve, reject) => {
+            cmdinstance.exec(cmdArgs);
+            resolve();
+        }).then(() => {
+            if (this.logToConsole) {
+                logger.info(`<CMD EXEC> {${message.author.tag}@${message.member ? message.member.guild.name : 'DM'}} ${message.content}`);
+            }
+        }).catch((err) => {
+            if (this.logToConsole) {
+                logger.error(`<CMD FAILED> {${message.author.tag}@${message.member ? message.member.guild.name : 'DM'}} ${message.content}`);
+            }
+            try {
+                cmdinstance.error(err, cmdArgs);
+            } catch (err) {
+                logger.error(`|${cmdinstance.mainInvoke}| failed executing commands error() function`);
+            }
+        });
     }
 
     _parseCommand(message) {
@@ -177,33 +217,10 @@ module.exports = class CmdHandler extends EventEmitter {
         if (Object.keys(this.registeredCommands).includes(invoke)) {
             let cmdArgs = this._assembleCommandArgsPayload(message, args);
             let cmdinstance = this.registeredCommands[invoke];
-            new Promise((resolve, reject) => {
-                cmdinstance.exec(cmdArgs);
-                resolve();
-            }).then(() => {
-                if (this.logToConsole) {
-                    logger.info(`<CMD EXEC> {${message.author.tag}@${message.member ? message.member.guild.name : 'DM'}} ${message.content}`);
-                }
-            }).catch((err) => {
-                if (this.logToConsole) {
-                    logger.error(`<CMD FAILED> {${message.author.tag}@${message.member ? message.member.guild.name : 'DM'}} ${message.content}`);
-                }
-                try {
-                    cmdinstance.error(err, cmdArgs);
-                } catch (err) {
-                    logger.error(`|${cmdinstance.mainInvoke}| failed executing commands error() function`);
-                }
-            });
+            this._execCommand(cmdinstance, message, cmdArgs);
         } else if (invoke == 'help') {
             let cmdArgs = this._assembleCommandArgsPayload(message, args);
-            new Promise((resolve, reject) => {
-                this._defaultHelpCmdInstance.exec(cmdArgs);
-                resolve();
-            }).then(() => {
-                if (this.logToConsole) {
-                    logger.info(`<CMD EXEC> {${message.author.tag}@${message.member ? message.member.guild.name : 'DM'}} ${message.content}`);
-                }
-            });
+            this._execCommand(this._defaultHelpCmdInstance, message, cmdArgs);
         }
     }
 }
