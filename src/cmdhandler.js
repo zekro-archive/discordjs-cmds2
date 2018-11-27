@@ -15,6 +15,7 @@ class CmdHandler extends EventEmitter {
 
     /**
      * Create instance of Cmdhandler.
+     * @public
      * @param {Object}  client                    discord.js client instance
      * @param {Object}  options                   Options for the CommandHandler
      * @param {string}  options.prefix            Default prefix to access bot. This prefix is ALWAYS ACTIVE and will
@@ -67,6 +68,7 @@ class CmdHandler extends EventEmitter {
 
     /**
      * Register used database driver class. Must extend DatabaseInterface.
+     * @public
      * @param {Object} DatabaseDriverClass Class of the used database driver (must extend DatabaseInterface)
      * @returns this
      */
@@ -85,6 +87,7 @@ class CmdHandler extends EventEmitter {
      * Register a custom permission handler class for command
      * permission instead of default permission level based system.
      * Must extend PermissionInstance.
+     * @public
      * @param {Object} PermissionHandlerClass Class of used permission handler (must extend PermissionInstance)
      */
     setPermissionHandler(PermissionHandlerClass) {
@@ -100,6 +103,7 @@ class CmdHandler extends EventEmitter {
 
     /**
      * Register a command Class.
+     * @public
      * @param {Object} CommandClass Class of the Command (not an instance!)
      * @param {string} [commandGroup] Commands group (defaultly 'MISC') 
      * @returns {Object} this
@@ -128,6 +132,7 @@ class CmdHandler extends EventEmitter {
 
     /**
      * Default command groups enum.
+     * @public
      */
     static get DEFAULT_GROUPS() {
         return {
@@ -143,11 +148,20 @@ class CmdHandler extends EventEmitter {
 
     ///// PRIVATES /////
 
+    /**
+     * Will be executed if discord.js client is ready.
+     * @private
+     */
     _setup() {
         this.permissionHandler = new this._permissionHandlerClass(this.databaseDriver);
         this._registerMessageHandler();
     }
 
+    /**
+     * Registers message handlers for ingoing messages and
+     * message edits, if activated in options.
+     * @private
+     */
     _registerMessageHandler() {
         this.client.on('message', (message) => {
             this._parseCommand(message)
@@ -160,6 +174,11 @@ class CmdHandler extends EventEmitter {
         logger.info(`Registered ${this.registeredCommandInstancesSingle.length} commands`);
     }
 
+    /**
+     * Creates command argument object from message object and
+     * arguments.
+     * @private
+     */
     _assembleCommandArgsPayload(message, args) {
         return {
             channel:    message.channel,
@@ -171,6 +190,10 @@ class CmdHandler extends EventEmitter {
         };
     }
 
+    /**
+     * Executes a command from CmdInstance
+     * @private
+     */
     _execCommand(cmdinstance, message, cmdArgs) {
         new Promise((resolve, reject) => {
             cmdinstance.exec(cmdArgs);
@@ -191,6 +214,11 @@ class CmdHandler extends EventEmitter {
         });
     }
 
+    /**
+     * Handle function for message and edit event to check if
+     * a command should be executed.
+     * @private
+     */
     _parseCommand(message) {
         if (!message || message.author == this.client.user || message.author.bot) {
             return;

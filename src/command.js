@@ -10,6 +10,9 @@ class Command {
 
     ///// PUBLIC ABSTRACT /////
 
+    /**
+     * Create instance of Command.
+     */
     constructor() {
         this.help;
         this.description;
@@ -26,6 +29,7 @@ class Command {
      * Returns invoke of the command.
      * First invoke will be displayed in help command and be interpreted
      * as main invoke.
+     * @public
      * @abstract
      * @returns {string[]} command invokes
      */
@@ -35,6 +39,7 @@ class Command {
 
     /**
      * Returns a short description text of the command.
+     * @public
      * @abstract
      * @returns {string} description
      */
@@ -44,6 +49,7 @@ class Command {
     
     /**
      * Returns a detailed help text how to use this command.
+     * @public
      * @abstract
      * @returns {string} help text
      */
@@ -54,6 +60,7 @@ class Command {
     /**
      * Returns the minimum permission level required for this command
      * as a number larger then or even as 0.
+     * @public
      * @abstract
      * @returns {number} permission level 
      */
@@ -70,6 +77,7 @@ class Command {
      * - message:    Message object of the command message
      * - args:       The arguments passed to the command as string array
      * - cmdhandler: Commandhandler instance
+     * @public
      * @abstract
      * @param {Object} commandArguments
      * @param {Object} commandArguments.channel     TextChannel where command was sent to
@@ -87,9 +95,10 @@ class Command {
      * Function which will be executed when the command failed.
      * This function will get passed an error object and the commandArguments
      * which were passed to the command before.
+     * @public
      * @abstract
      * @param {error}  error
-     * @param {Object} commandArguments @see exec
+     * @param {Object} commandArguments [→ see exec]{@link Command#exec}
      * @param {Object} commandArguments
      * @param {Object} commandArguments.channel     TextChannel where command was sent to
      * @param {Object} [commandArguments.member]    Member object of sender of the command
@@ -112,14 +121,30 @@ class Command {
 
     ///// PUBLIC /////
 
+    /**
+     * Returns the main invoke which will be used in help message,
+     * for example. This is the fist invoke of the invokes list.
+     * @public
+     * @returns {string} mainInvoke
+     */
     get mainInvoke() {
         return this.invokes[0];
     }
 
+    /**
+     * Returns group of command, if set.
+     * @public
+     * @returns {string} group
+     */
     get group() {
         return this._group;
     }
 
+    /**
+     * Sends an assembled help message embed into a discord
+     * chat.
+     * @param {Object} channel discord.js channel object
+     */
     sendHelp(channel) {
         let emb = new discordjs.RichEmbed()
             .setColor(consts.COLORS.DEFAULT)
@@ -134,6 +159,10 @@ class Command {
 
     ///// PRIVATES /////
 
+    /**
+     * Set discord client instance.
+     * @private
+     */
     _setClient(client) {
         if (!client) {
             throw Error('discord.js client instance is undefined');
@@ -142,6 +171,10 @@ class Command {
         return this;
     }
 
+    /**
+     * Set group of command.
+     * @private
+     */
     _setGroup(group) {
         if (group) {
             this._group = group;

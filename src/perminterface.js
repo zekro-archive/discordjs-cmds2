@@ -25,15 +25,16 @@ class PermissionInterface {
      * This function must return a Promise instance with resolve() getting
      * passed either 'true' (is permitted) or 'false' (is not permitted) and
      * reject() getting passed the error object.
+     * @public
      * @abstract
-     * @param {Object} commandArguments             Command arguments payload @see Command
+     * @param {Object} commandArguments             Command arguments payload [→ see Command]{@link Command}
      * @param {Object} commandArguments.channel     TextChannel where command was sent to
      * @param {Object} [commandArguments.member]    Member object of sender of the command
      * @param {Object} [commandArguments.guild]     Guild where the command was sent to ('undefined' if command was send to DM channel)
      * @param {Object} commandArguments.message     Message object of the command message
      * @param {Object} commandArguments.args        The arguments passed to the command as string array
      * @param {Object} commandArguments.cmdhandler  CommandHander instance
-     * @param {Object} commandInstance              Command instance @see Command
+     * @param {Object} commandInstance              Command instance [→ see Command]{@link Command}
      * @returns {Promise} pending promise
      */
     checkUserPermission(commandArguments, commandInstance) {

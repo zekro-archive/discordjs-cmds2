@@ -19,6 +19,7 @@ class DatabaseInterface {
      * must return an instance of Promise. resolve() should get passed the 
      * permission level of the user as number and reject() should get passed
      * the error object.
+     * @public
      * @abstract
      * @param {string} userID ID (snowflake) of the user
      * @returns {Promise} pending promise
@@ -32,6 +33,7 @@ class DatabaseInterface {
      * must return an instance of Promise. resolve() should get passed the
      * prefix of the guild as string if set, else none, if no custom prefix is
      * set on teh guild. reject() should get passed the error object.
+     * @public
      * @abstract
      * @param {string} guildID ID (snowflake) of the guild
      * @returns {Promise} pending promise
