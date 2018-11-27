@@ -1,6 +1,5 @@
 const discordjs = require('discord.js');
 const CmdHandler = require('../src/main').CmdHandler;
-const Command = require('../src/main').Command;
 const DbDriver = require('./dbdriver');
 const PermissionHandler = require('./permhandler');
 

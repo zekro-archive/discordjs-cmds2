@@ -20,6 +20,7 @@ class CmdHandler extends EventEmitter {
      * @param {Object}  options                   Options for the CommandHandler
      * @param {string}  options.prefix            Default prefix to access bot. This prefix is ALWAYS ACTIVE and will
      *                                            not be overwritten by guild prefixes.
+     * @param {string}  [options.botOwnerID]      The ID of the owner of this bot. This user will automatically get FULL PERMISSION for ALL commands!     
      * @param {number}  [options.ownerPermLvl]    Guild owner permission level (default: 10)
      * @param {number}  [options.defaultColor]    Default color used for output message embeds
      * @param {boolean} [options.logToConsole]    Wether log command executions to console or not (default: true)
@@ -48,6 +49,7 @@ class CmdHandler extends EventEmitter {
         this.guildPrefixes = {};
 
         this.prefix = options.prefix;
+        this.botOwner = options.botOwnerID;
         this.ownerPermLvl = options.ownerPermLvl || 10;
         this.logToConsole = options.logToConsole ? options.logToConsole : true;
         this.verboseLog = options.verboseLog ? options.verboseLog : false;
@@ -56,6 +58,9 @@ class CmdHandler extends EventEmitter {
         this.parseDM = options.parseDM ? options.parseDM : false;
         if (options.defaultColor) {
             consts.COLORS.DEFAULT = options.defaultColor;
+        }
+        if (!this.botOwner) {
+            logger.warning('No bot owner set! If you are the owner / host of this bot, please set your ID as bot owner for full permission to all commands!');
         }
 
         this._defaultHelpCmdInstance = new HelpCmd();
@@ -190,28 +195,40 @@ class CmdHandler extends EventEmitter {
         };
     }
 
+    _commandFailed(cmdinstance, message, cmdArgs, err) {
+        if (this.logToConsole) {
+            logger.error(`<CMD FAILED> {${message.author.tag}@${message.member ? message.member.guild.name : 'DM'}} ${message.content}`);
+        }
+        try {
+            cmdinstance.error(err, cmdArgs);
+        } catch (err) {
+            logger.error(`|${cmdinstance.mainInvoke}| failed executing commands error() function: ` + err);
+        }
+    }
+
     /**
      * Executes a command from CmdInstance
      * @private
      */
     _execCommand(cmdinstance, message, cmdArgs) {
-        new Promise((resolve, reject) => {
-            cmdinstance.exec(cmdArgs);
-            resolve();
-        }).then(() => {
-            if (this.logToConsole) {
-                logger.info(`<CMD EXEC> {${message.author.tag}@${message.member ? message.member.guild.name : 'DM'}} ${message.content}`);
+        this.permissionHandler.checkUserPermission(cmdArgs, cmdinstance).then((permitted) => {
+            if (permitted || (this.botOwner && cmdArgs.author.id == this.botOwner)) {
+                new Promise((resolve, reject) => {
+                    cmdinstance.exec(cmdArgs);
+                    resolve();
+                }).then(() => {
+                    if (this.logToConsole) {
+                        logger.info(`<CMD EXEC> {${message.author.tag}@${message.member ? message.member.guild.name : 'DM'}} ${message.content}`);
+                    }
+                }).catch((err) => {
+                    this._commandFailed(cmdinstance, message, cmdArgs, err)
+                });;
+            } else {
+                this._commandFailed(cmdinstance, message, cmdArgs, Error('Missing permission.'))
             }
         }).catch((err) => {
-            if (this.logToConsole) {
-                logger.error(`<CMD FAILED> {${message.author.tag}@${message.member ? message.member.guild.name : 'DM'}} ${message.content}`);
-            }
-            try {
-                cmdinstance.error(err, cmdArgs);
-            } catch (err) {
-                logger.error(`|${cmdinstance.mainInvoke}| failed executing commands error() function`);
-            }
-        });
+            logger.error('Permission check failed:', err);
+        })
     }
 
     /**
@@ -231,32 +248,43 @@ class CmdHandler extends EventEmitter {
         let guild = message.member ? message.member.guild : null;
 
         let _cont = message.content;
-        let _prefix = this.guildPrefixes[(guild ? guild.id : '')] || this.prefix;
 
-        if (!_cont.startsWith(_prefix)) {
-            return;
-        }
+        new Promise((resolve, reject) => {
+            if (guild) {
+                let guildPrefix;
+                this.databaseDriver.getGuildPrefix(guild.id).then((prefix) => {
+                    guildPrefix = prefix;
+                }).catch(() => {
+                }).finally(() => {
+                    resolve(guildPrefix);
+                });
+            }
+        }).then((guildPrefix) => {
+            let _defPreUsed = _cont.startsWith(this.prefix);
+            let _guildPreUsed = (guildPrefix && _cont.startsWith(guildPrefix))
+            if (_defPreUsed || _guildPreUsed) {
+                let invoke = _cont
+                    .split(/\s+/g)[0]
+                    .substr(_defPreUsed ? this.prefix.length : guildPrefix.length);
+                
+                if (this.invokeToLower) {
+                    invoke = invoke.toLowerCase();
+                }
 
-        let invoke = _cont
-            .split(/\s+/g)[0]
-            .substr(_prefix.length);
-
-        if (this.invokeToLower) {
-            invoke = invoke.toLowerCase();
-        }
-        
-        let args = _cont
-            .split(/\s+/g)
-            .slice(1);
-
-        if (Object.keys(this.registeredCommands).includes(invoke)) {
-            let cmdArgs = this._assembleCommandArgsPayload(message, args);
-            let cmdinstance = this.registeredCommands[invoke];
-            this._execCommand(cmdinstance, message, cmdArgs);
-        } else if (invoke == 'help') {
-            let cmdArgs = this._assembleCommandArgsPayload(message, args);
-            this._execCommand(this._defaultHelpCmdInstance, message, cmdArgs);
-        }
+                let args = _cont
+                    .split(/\s+/g)
+                    .slice(1);
+            
+                if (Object.keys(this.registeredCommands).includes(invoke)) {
+                    let cmdArgs = this._assembleCommandArgsPayload(message, args);
+                    let cmdinstance = this.registeredCommands[invoke];
+                    this._execCommand(cmdinstance, message, cmdArgs);
+                } else if (invoke == 'help') {
+                    let cmdArgs = this._assembleCommandArgsPayload(message, args);
+                    this._execCommand(this._defaultHelpCmdInstance, message, cmdArgs);
+                }
+            }
+        });
     }
 }
 
