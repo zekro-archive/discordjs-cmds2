@@ -29,6 +29,7 @@
 - You can also implement your own permission system into discordjs-cmds2 by using the `PermissionInterface` class.
 - Group your commands together
 - Automatically created command list and help message
+- You can also replace the default help command with your own just by overwriting the `help` invoke.
 - Promise-Based safety: Every command will be executed in seperate threads which also will catch all exceptions thrown in the commands code.
 
 ---
@@ -111,3 +112,17 @@ module.exports = class TestCommand extends Command {
 For further examples how to use this package, take a look [**here**](https://github.com/zekroTJA/discordjs-cmds2/tree/master/tests).
 
 ---
+
+# To-Do
+
+- [ ] Extended logging / Custom logging implementation
+- [ ] Sub-Commands
+- [ ] External command list (Markdown, HTML, ...)
+- [ ] Guild black *(and white)* listing
+- [ ] User black *(and white)* listing
+
+---
+
+© 2018 zekro Development  
+[zekro.de](htttps://zekro.de) | contact[at]zekro.de  
+MIT Licence
