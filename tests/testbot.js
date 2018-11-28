@@ -2,6 +2,7 @@ const discordjs = require('discord.js');
 const CmdHandler = require('../src/main').CmdHandler;
 const DbDriver = require('./dbdriver');
 const PermissionHandler = require('./permhandler');
+const TestLogger = require('./testlogger');
 
 const conf = require('../private.conf.json');
 
@@ -12,6 +13,7 @@ var cmdHandler = new CmdHandler(client, {
 });
 
 cmdHandler
+    .registerLogger('test', TestLogger)
     .setDatabaseDriver(DbDriver)
     .setPermissionHandler(PermissionHandler)
     .registerCommand(require('./testcmd'));

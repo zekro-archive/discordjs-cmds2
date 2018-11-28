@@ -4,9 +4,9 @@ const HelpCmd = require('./helpcmd');
 const consts = require('./const');
 const Command = require('./command');
 const DatabaseInterface = require('./dbinterface');
-const logger = require('./logger').logger;
 const DefaultPermissionHandler = require('./defpermhandler');
 const PermissionInterface = require('./perminterface');
+const LoggerContainer = require('./loggercontainer');
 
 
 class CmdHandler extends EventEmitter {
@@ -16,19 +16,21 @@ class CmdHandler extends EventEmitter {
     /**
      * Create instance of Cmdhandler.
      * @public
-     * @param {Object}  client                    discord.js client instance
-     * @param {Object}  options                   Options for the CommandHandler
-     * @param {string}  options.prefix            Default prefix to access bot. This prefix is ALWAYS ACTIVE and will
-     *                                            not be overwritten by guild prefixes.
-     * @param {string}  [options.botOwnerID]      The ID of the owner of this bot. This user will automatically get FULL PERMISSION for ALL commands!     
-     * @param {number}  [options.ownerPermLvl]    Guild owner permission level (default: 10)
-     * @param {number}  [options.defaultColor]    Default color used for output message embeds
-     * @param {boolean} [options.logToConsole]    Wether log command executions to console or not (default: true)
-     * @param {boolean} [options.verboseLog]      Enabel or disable verbose logging (default: false)  
-     * @param {boolean} [options.invokeToLower]   Wether invoke should be always lowercased or not (default: true)
-     * @param {boolean} [options.parseMsgEdit]    Wether or not the command parser should interprete edited messages
-     *                                            as command executions or not (default: true)
-     * @param {boolean} [options.parseDM]         Wether or not the bot should parse commands in DMs generally (default: false) 
+     * @param {Object}  client                     discord.js client instance
+     * @param {Object}  options                    Options for the CommandHandler
+     * @param {string}  options.prefix             Default prefix to access bot. This prefix is ALWAYS ACTIVE and will
+     *                                             not be overwritten by guild prefixes.
+     * @param {string}  [options.botOwnerID]       The ID of the owner of this bot. This user will automatically get FULL PERMISSION for ALL commands!     
+     * @param {number}  [options.ownerPermLvl]     Guild owner permission level (default: 10)
+     * @param {number}  [options.defaultColor]     Default color used for output message embeds
+     * @param {boolean} [options.useDefaultLogger] If you do not want to use the default winston logger in addition to other registered loggers, set this
+     *                                             to 'false' (default: true)
+     * @param {boolean} [options.logToConsole]     Wether log command executions to console or not (default: true)
+     * @param {boolean} [options.verboseLog]       Enabel or disable verbose logging (default: false)  
+     * @param {boolean} [options.invokeToLower]    Wether invoke should be always lowercased or not (default: true)
+     * @param {boolean} [options.parseMsgEdit]     Wether or not the command parser should interprete edited messages
+     *                                             as command executions or not (default: true)
+     * @param {boolean} [options.parseDM]          Wether or not the bot should parse commands in DMs generally (default: false) 
      */
     constructor(client, options) {
         super();
@@ -48,6 +50,9 @@ class CmdHandler extends EventEmitter {
         this.registeredCommandInstancesSingle = [];
         this.guildPrefixes = {};
 
+        this.useDefaultLogger = options.useDefaultLogger ? options.useDefaultLogger : true;
+        this.logger = new LoggerContainer(this.useDefaultLogger);
+
         this.prefix = options.prefix;
         this.botOwner = options.botOwnerID;
         this.ownerPermLvl = options.ownerPermLvl || 10;
@@ -58,9 +63,6 @@ class CmdHandler extends EventEmitter {
         this.parseDM = options.parseDM ? options.parseDM : false;
         if (options.defaultColor) {
             consts.COLORS.DEFAULT = options.defaultColor;
-        }
-        if (!this.botOwner) {
-            logger.warning('No bot owner set! If you are the owner / host of this bot, please set your ID as bot owner for full permission to all commands!');
         }
 
         this._defaultHelpCmdInstance = new HelpCmd();
@@ -133,6 +135,28 @@ class CmdHandler extends EventEmitter {
         return this;
     }
 
+    /**
+     * Register a new logger. Must extend LoggerInterface.
+     * @public
+     * @param {string} name              Name of the logger
+     * @param {Object} LoggerClass       Class object of the logger
+     * @param {number} [defaultLogLevel] Default log level (default: 0) 
+     */
+    registerLogger(name, LoggerClass, defaultLogLevel) {
+        this.logger.registerLogger(name, LoggerClass, defaultLogLevel);
+        return this;
+    }
+
+    /**
+     * Get a registered logger instance by name.
+     * @public
+     * @param {string} name Registered name of the logger
+     * @returns {Object} Logger instance
+     */
+    getLoggerByName(name) {
+        return this.logger.getLoggerByName(name);
+    }
+
     ///// PUBLIC STATICS /////
 
     /**
@@ -158,6 +182,9 @@ class CmdHandler extends EventEmitter {
      * @private
      */
     _setup() {
+        if (!this.botOwner) {
+            this.logger.warning('No bot owner set! If you are the owner / host of this bot, please set your ID as bot owner for full permission to all commands!');
+        }
         this.permissionHandler = new this._permissionHandlerClass(this.databaseDriver);
         this._registerMessageHandler();
     }
@@ -176,7 +203,7 @@ class CmdHandler extends EventEmitter {
                this. _parseCommand(newMessage);
             });
         }
-        logger.info(`Registered ${this.registeredCommandInstancesSingle.length} commands`);
+        this.logger.info(`Registered ${this.registeredCommandInstancesSingle.length} commands`);
     }
 
     /**
@@ -197,12 +224,12 @@ class CmdHandler extends EventEmitter {
 
     _commandFailed(cmdinstance, message, cmdArgs, err) {
         if (this.logToConsole) {
-            logger.error(`<CMD FAILED> {${message.author.tag}@${message.member ? message.member.guild.name : 'DM'}} ${message.content}`);
+            this.logger.error(`<CMD FAILED> {${message.author.tag}@${message.member ? message.member.guild.name : 'DM'}} ${message.content}`);
         }
         try {
             cmdinstance.error(err, cmdArgs);
         } catch (err) {
-            logger.error(`|${cmdinstance.mainInvoke}| failed executing commands error() function: ` + err);
+            this.logger.error(`|${cmdinstance.mainInvoke}| failed executing commands error() function: ` + err);
         }
     }
 
@@ -218,7 +245,7 @@ class CmdHandler extends EventEmitter {
                     resolve();
                 }).then(() => {
                     if (this.logToConsole) {
-                        logger.info(`<CMD EXEC> {${message.author.tag}@${message.member ? message.member.guild.name : 'DM'}} ${message.content}`);
+                        this.logger.info(`<CMD EXEC> {${message.author.tag}@${message.member ? message.member.guild.name : 'DM'}} ${message.content}`);
                     }
                 }).catch((err) => {
                     this._commandFailed(cmdinstance, message, cmdArgs, err)
@@ -227,7 +254,7 @@ class CmdHandler extends EventEmitter {
                 this._commandFailed(cmdinstance, message, cmdArgs, Error('Missing permission.'))
             }
         }).catch((err) => {
-            logger.error('Permission check failed:', err);
+            this.logger.error('Permission check failed:', err);
         })
     }
 

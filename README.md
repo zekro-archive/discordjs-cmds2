@@ -31,6 +31,7 @@
 - Automatically created command list and help message
 - You can also replace the default help command with your own just by overwriting the `help` invoke.
 - Promise-Based safety: Every command will be executed in seperate threads which also will catch all exceptions thrown in the commands code.
+- Register your own logger classes based on the `LoggerInterface` if you want to log into a Database or whatever you want to do with it
 
 ---
 
@@ -115,11 +116,11 @@ For further examples how to use this package, take a look [**here**](https://git
 
 # To-Do
 
-- [ ] Extended logging / Custom logging implementation
 - [ ] Sub-Commands
 - [ ] External command list (Markdown, HTML, ...)
 - [ ] Guild black *(and white)* listing
 - [ ] User black *(and white)* listing
+- [x] Extended logging / Custom logging implementation
 
 ---
 
