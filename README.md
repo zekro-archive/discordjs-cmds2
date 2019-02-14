@@ -1,6 +1,6 @@
 <div align="center">
     <h1>~ discordjs-cmds2 ~</h1>
-    <strong>Command parser framework for discord.js - rewrote version of discordjs-cmds</strong><br><br>
+    <strong>Command parser framework for discord.js - rewrite version of discordjs-cmds</strong><br><br>
     <a href="https://zekro.de/docs/discordjs-cmds2"><img src="https://img.shields.io/badge/docs-jsdocs-c918cc.svg" /></a>
     <a href="https://www.npmjs.com/package/discordjs-cmds2" ><img src="https://img.shields.io/npm/v/discordjs-cmds2.svg" /></a>&nbsp;
     <a href="https://www.npmjs.com/package/discordjs-cmds2" ><img src="https://img.shields.io/npm/dt/discordjs-cmds2.svg" /></a>
