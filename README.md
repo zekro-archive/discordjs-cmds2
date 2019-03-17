@@ -124,6 +124,6 @@ For further examples how to use this package, take a look [**here**](https://git
 
 ---
 
-© 2018 zekro Development  
+© 2018 - 2019 zekro Development  
 [zekro.de](htttps://zekro.de) | contact[at]zekro.de  
 MIT Licence
